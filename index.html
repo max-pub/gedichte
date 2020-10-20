@@ -1,7 +1,7 @@
 <meta content='width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no'
 	name='viewport' />
 <!-- <link href='https://fonts.googleapis.com/css?family=Josefin+Sans:100' rel='stylesheet' type='text/css'> -->
-<!-- <link href='https://max.pub/css/base.css' rel='stylesheet' type='text/css'> -->
+<link href='https://max.pub/css/base.css' rel='stylesheet' type='text/css'>
 <link href='https://max.pub/css/josefin.css' rel='stylesheet' type='text/css'>
 
 <style>
@@ -9,7 +9,7 @@
 	html {
 		/* background: #1a1a1a; */
 		/* color: #eee; */
-		font-family: josefin;
+		/* font-family: josefin; */
 		font-size: 25px;
 		font-weight: 100
 	}
@@ -25,7 +25,13 @@
 
 	a {
 		text-decoration: none;
-		color: black
+		color: white;
+		/* color: black */
+	}
+
+	p {
+		text-align: center;
+		white-space: pre;
 	}
 
 	main {
@@ -43,39 +49,59 @@
 </style>
 
 
-<main>
-	<h1>Gedichte</h1>
+<article>
 
-</main>
 
-<script>
-	/**
-	 * Shuffles array in place. ES6 version
-	 * @param {Array} a items An array containing the items.
-	 */
-	function shuffle(a) {
-		for (let i = a.length - 1; i > 0; i--) {
-			const j = Math.floor(Math.random() * (i + 1));
-			[a[i], a[j]] = [a[j], a[i]];
+</article>
+
+<script type='module'>
+	// /**
+	//  * Shuffles array in place. ES6 version
+	//  * @param {Array} a items An array containing the items.
+	//  */
+	// function shuffle(a) {
+	// 	for (let i = a.length - 1; i > 0; i--) {
+	// 		const j = Math.floor(Math.random() * (i + 1));
+	// 		[a[i], a[j]] = [a[j], a[i]];
+	// 	}
+	// 	return a;
+	// }
+	import 'https://max.pub/lib/array.js';
+
+
+	const DATA = {};
+
+	async function loadData() {
+		// let names = await fetch('https://api.github.com/repos/max-pub/gedichte/contents/max/').then(x => x.json())
+		// names = names.map(x => x.name).replace('.txt', '');
+		let names = 'fluss,gefuehle,gefunden,himmel,kind,last,leben,liebe,lisboa,maria,see,sein,trauer,verhalten,wolke,zyklus'.split(',')
+		console.log('names', names)
+		for (let ID of names) {
+			console.log('load', name)
+			let poem = await fetch('https://max.pub/gedichte/max/' + ID + '.txt').then(x => x.text());
+			// console.log('loaded', name, poem)
+			let [title, snippet, full] = poem.replace(/\r/g, '').split('\n\n\n\n')
+			DATA[ID] = { ID, title, snippet, full };
+			// console.log(title, snippet)
 		}
-		return a;
+		console.log('data', DATA);
 	}
 
-	(async function () {
-		const data = await fetch('https://api.github.com/repos/max-pub/gedichte/contents/max/').then(x => x.json());
-		const names = data.map(x => x.name)
-		shuffle(names);
-		// console.log(names);
-		// let poems = {};
-		let main = document.querySelector('main');
-		for (let name of names) {
-			let poem = await fetch('https://max.pub/gedichte/max/' + name).then(x => x.text());
-			console.log('loaded', name, poem)
-			let [title, snippet, full] = poem.split('\n\n\n\n')
-			console.log(title, snippet)
-			let html = `<a href='#${name.replace('.txt', '')}'><h3>${title}</h3><p>${snippet.replace(/\n/g, '<br/>')}</p></a>`;
-			main.insertAdjacentHTML('beforeend', html);
-		}
+	function showList() {
+		document.querySelector('article').innerHTML = '<h1>Gedichte</h1>' + Object.values(DATA).shuffle().map(x => `<a href='#${x.ID}'><h3>${x.title}</h3><p>${x.snippet.replace(/\n/g, '<br/>')}</p></a>`).join('\n')
+	}
+	function showPoem(ID) {
+		let poem = DATA[ID];
+		document.querySelector('article').innerHTML = `<h1>${poem.title}</h1>` + poem.full.replace(/\r/g,'').split('\n\n').map(x=>`<p>${x}</p>`).join('');
+	}
+	async function hashChange() {
+		console.log('hash change')
+		if (!Object.keys(DATA).length) await loadData();
+		let hash = document.location.hash.substr(1).trim();
+		if(hash) showPoem(hash)
+		else showList();
+	}
 
-	})()
+	window.addEventListener('hashchange', e => hashChange())
+	hashChange();
 </script>
